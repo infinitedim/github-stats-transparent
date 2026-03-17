@@ -111,6 +111,8 @@ async def main() -> None:
         if not access_token:
             raise ValueError("A personal access token is required to proceed!")
     user = os.getenv("GITHUB_ACTOR")
+    if not user:
+        raise ValueError("GITHUB_ACTOR environment variable is not set!")
     exclude_repos = os.getenv("EXCLUDED")
     exclude_repos = (
         {x.strip() for x in exclude_repos.split(",")} if exclude_repos else None
@@ -119,7 +121,8 @@ async def main() -> None:
     exclude_langs = (
         {x.strip() for x in exclude_langs.split(",")} if exclude_langs else None
     )
-    consider_forked_repos = len(os.getenv("COUNT_STATS_FROM_FORKS")) != 0
+    count_forks_env = os.getenv("COUNT_STATS_FROM_FORKS", "")
+    consider_forked_repos = len(count_forks_env) != 0
     async with aiohttp.ClientSession() as session:
         s = Stats(
             user,
