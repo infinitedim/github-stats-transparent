@@ -488,13 +488,12 @@ class Stats:
         if self._views is not None:
             return self._views
 
-        self._views = sum(
-            view.get("count", 0)
-            for repo in await self.repos
-            for view in (
-                await self.queries.query_rest(f"/repos/{repo}/traffic/views")
-            ).get("views", [])
-        )
+        total = 0
+        for repo in await self.repos:
+            r = await self.queries.query_rest(f"/repos/{repo}/traffic/views")
+            for view in r.get("views", []):
+                total += view.get("count", 0)
+        self._views = total
         return self._views
 
 
