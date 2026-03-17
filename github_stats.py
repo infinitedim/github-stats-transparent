@@ -245,6 +245,8 @@ class Stats:
         self._exclude_langs: set = exclude_langs or set()
         self._consider_forked_repos = consider_forked_repos
         self.queries = Queries(username, access_token, session)
+        self._stats_lock = asyncio.Lock()
+        self._stats_loaded = False
 
         self._name: Optional[str] = None
         self._stargazers: Optional[int] = None
@@ -354,9 +356,11 @@ class Stats:
             v["prop"] = 100 * weighted / langs_total if langs_total > 0 else 0
 
     async def _ensure_stats(self) -> None:
-        """Lazily fetch stats if not yet loaded."""
-        if self._stargazers is None:
-            await self.get_stats()
+        """Lazily fetch stats if not yet loaded. Thread-safe via asyncio.Lock."""
+        async with self._stats_lock:
+            if not self._stats_loaded:
+                await self.get_stats()
+                self._stats_loaded = True
 
     @property
     async def name(self) -> str:
